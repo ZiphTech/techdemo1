@@ -21,8 +21,8 @@ public class Main extends SimpleApplication
     Spatial aiPad;
     Spatial playerPad;
     
-    int height = cam.getHeight();
-    int width = cam.getWidth();
+    int height;
+    int width;
 
     public static void main(String[] args) {
         Main app = new Main();
@@ -35,6 +35,8 @@ public class Main extends SimpleApplication
         initAssets();
         initCamera();
         initKeys();
+        height = cam.getHeight();
+        width = cam.getWidth();
     }
 
     @Override
@@ -95,12 +97,12 @@ public class Main extends SimpleApplication
             if (name.equals("Up"))
             {
                  Vector3f v = playerPad.getLocalTranslation();
-                 playerPad.setLocalTranslation(v.x, v.y, v.z + 0.005f + value * speed);
+                 playerPad.setLocalTranslation(v.x, v.y, v.z + 0.005f + value * ballSpeed);
             }
             if (name.equals("Down"))
             {
                 Vector3f v = playerPad.getLocalTranslation();
-                 playerPad.setLocalTranslation(v.x, v.y, v.z - 0.005f - value * speed);
+                 playerPad.setLocalTranslation(v.x, v.y, v.z - 0.005f - value * ballSpeed);
             }
         }
     };
@@ -110,15 +112,47 @@ public class Main extends SimpleApplication
         
     }
     
+    boolean atTopBorder = false;
+    boolean atBottomBorder = false;
+    boolean atLeftBorder = false;
+    boolean atRightBorder = false;
+    boolean changeDir = false;
+    int ballSpeed = 2;
+    int deltaX = 1;
+    int deltaZ = 1;
+    
+    /*
+     * NOT WORKING CORRECTLY; BAD CODE
+     */
+    
     private void ballLogic(float tpf)
     {
         Vector3f v = ball.getLocalTranslation();
         
+        // Ball (Y) Position is entirely irrelevent.
+        atTopBorder = v.x > 4;
+        atBottomBorder = v.x < -4;
+        atLeftBorder = v.z > 4;
+        atRightBorder = v.z < -4;
         
-        v.set(v.x + 2 * tpf, v.y, v.z + 2 * tpf);
-        
-        
-        
+        if (atTopBorder || atBottomBorder)
+        {
+            deltaX *= -1;
+            changeDir = true;
+        }
+        if (atLeftBorder || atRightBorder)
+        {
+            deltaZ *= -1;
+            changeDir = true;
+        }
+        if (!changeDir)
+        {
+            v.set(v.x + deltaX * ballSpeed * tpf, v.y, v.z + deltaZ * ballSpeed * tpf);
+        }
+        else
+        {
+            v.set(v.x - deltaX * ballSpeed * tpf, v.y, v.z + deltaZ * ballSpeed * tpf);
+        }
         ball.setLocalTranslation(v);
     }
 }
