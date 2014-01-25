@@ -1,11 +1,14 @@
 package mygame;
 
 import com.jme3.app.SimpleApplication;
+import com.jme3.audio.AudioNode;
 import com.jme3.bounding.BoundingVolume;
 import com.jme3.collision.CollisionResults;
+import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.KeyTrigger;
+import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
 import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
@@ -23,6 +26,18 @@ public class Main extends SimpleApplication
     Spatial aiPad;
     Spatial playerPad;
     
+    AudioNode ballHit;
+    AudioNode ballDeath;
+    
+    BitmapText txtScore;
+    
+    float aiMove = 1;
+    
+    int playerScore = 0;
+    int compScore = 0;
+    
+    String scoreInfo = "Player: " + playerScore + "\t\t\t Computer: " + compScore;
+    
     public static void main(String[] args) {
         
         AppSettings settings = new AppSettings(true);
@@ -36,7 +51,6 @@ public class Main extends SimpleApplication
     @Override
     public void simpleInitApp() 
     {
-        
         initAssets();
         initCamera();
         initKeys();
@@ -47,7 +61,7 @@ public class Main extends SimpleApplication
     @Override
     public void simpleUpdate(float tpf) {
         //TODO: add update code
-        aiLogic();
+        aiLogic(tpf);
         ballLogic(tpf);
     }
 
@@ -62,6 +76,15 @@ public class Main extends SimpleApplication
         aiPad = assetManager.loadModel("Models/paddle1/paddle1.j3o");
         playerPad = assetManager.loadModel("Models/paddle2/paddle2.j3o");
         
+        ballHit = new AudioNode(assetManager, "Sounds/BallHit.ogg");
+        ballDeath = new AudioNode(assetManager, "Sounds/BallDeath.ogg");
+        
+        txtScore = new BitmapText(guiFont, false);
+        txtScore.setSize(guiFont.getCharSet().getRenderedSize());
+        txtScore.setColor(ColorRGBA.White);
+        txtScore.setText(scoreInfo);
+        txtScore.setLocalTranslation(150, txtScore.getLineHeight(), -1);
+        
         aiPad.setLocalTranslation(5, 0, 0);
         playerPad.setLocalTranslation(-5, 0, 0);
         
@@ -75,6 +98,8 @@ public class Main extends SimpleApplication
         ball.scale(0.10f);
         aiPad.scale(0.10f);
         playerPad.scale(0.10f);
+        
+        guiNode.attachChild(txtScore);
 
         rootNode.attachChild(ball);
         rootNode.attachChild(aiPad);
@@ -110,7 +135,7 @@ public class Main extends SimpleApplication
                      v.y = 3.5f;
                  }
                  
-                 playerPad.setLocalTranslation(v.x, v.y + 4f * value, v.z);
+                 playerPad.setLocalTranslation(v.x, v.y + 5f * value, v.z);
             }
             if (name.equals("Down"))
             {
@@ -122,12 +147,12 @@ public class Main extends SimpleApplication
                     v.y = -3.5f;
                 }
                 
-                playerPad.setLocalTranslation(v.x, v.y  - 4f * value, v.z);
+                playerPad.setLocalTranslation(v.x, v.y  - 5f * value, v.z);
             }
         }
     };
     
-    private void aiLogic()
+    private void aiLogic(float tpf)
     {
         Vector3f v = aiPad.getLocalTranslation();
         Vector3f b = ball.getLocalTranslation();
@@ -143,6 +168,7 @@ public class Main extends SimpleApplication
         else
         {
             v.y = b.y;
+            //v.set(v.x, v.y + aiMove * tpf, v.z);
         }
         aiPad.setLocalTranslation(v);
     }
@@ -161,39 +187,62 @@ public class Main extends SimpleApplication
         
         v.set(v.x + ballXSpeed * tpf * deltaX, v.y + ballYSpeed * tpf * deltaY, v.z);
         
-        
         if (playerPad.collideWith(ballBound, results) > 0)
         {
             deltaX = 1;
+            increaseSpeed();
         }
         
         if (aiPad.collideWith(ballBound, results) > 0)
         {
             deltaX = -1;
+            increaseSpeed();
+            aiMove += 0.25f;
         }
-        
-        
         
         if (v.x > 5.5)
         {
-            //deltaX = -1;
             //PLAYER WIN; Computer LOOSE!
+            playerScore++;
+            resetBall();
         }
         else if (v.x < -5.5)
         {
-            //deltaX = 1;
             //PLAYER LOOSE; Computer WIN!
+            compScore++;
+            resetBall();
         }
         
         if (v.y > 4)
         {
             deltaY = -1;
+            ballHit.setPitch(2f);
+            ballHit.play();
         }
         else if (v.y < -4)
         {
             deltaY = 1;
+            ballHit.setPitch(2f);
+            ballHit.play();
         }
-        
         ball.setLocalTranslation(v);
+        txtScore.setText("Player: " + playerScore + "\t\t\t Computer: " + compScore);
+    }
+    
+    private void increaseSpeed()
+    {
+        ballHit.setPitch(1);
+        ballHit.play();
+        ballXSpeed += 0.10f;
+        ballYSpeed += 0.10f;
+    }
+    
+    private void resetBall()
+    {
+        ballDeath.play();
+        ball.setLocalTranslation(0, 0, 0);
+        ballXSpeed = 3f;
+        ballYSpeed = 1.25f;
+        aiMove = 1;
     }
 }
