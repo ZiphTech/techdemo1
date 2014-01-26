@@ -41,9 +41,12 @@ public class Main extends SimpleApplication
     public static void main(String[] args) {
         
         AppSettings settings = new AppSettings(true);
-        settings.setTitle("Pong V0.1 {BETA} || Drew Brown | Dan Shelley");
+        settings.setTitle("Pong V1.0 BY: Drew Brown & Dan Shelley");
+        settings.setVSync(true);
+        settings.setResolution(640, 480);
         
         Main app = new Main();
+        app.setShowSettings(false);
         app.setSettings(settings);
         app.start();
     }
@@ -157,19 +160,36 @@ public class Main extends SimpleApplication
         Vector3f v = aiPad.getLocalTranslation();
         Vector3f b = ball.getLocalTranslation();
         
-        if (b.y > 3.5)
+        if (v.y > 3.5)
         {
             v.y = 3.5f;
         }
-        else if (b.y < -3.5)
+        else if (v.y < -3.5)
         {
             v.y = -3.5f;
         }
         else
         {
-            v.y = b.y;
-            //v.set(v.x, v.y + aiMove * tpf, v.z);
+            if (b.y > v.y + 0.05)
+            {
+                v.y += 4.5f * tpf;
+            }
+            else if (b.y < v.y - 0.05)
+            {
+                v.y -= 4.5f * tpf;
+            }
         }
+        
+//        if (b.y > 0)
+//        {
+//            v.y += 0.25f;
+//        }
+//        else if (b.y < 0)
+//        {
+//            v.y -= 0.25f;
+//        }
+//        v.set(v.x, v.y, v.z);
+        
         aiPad.setLocalTranslation(v);
     }
     
